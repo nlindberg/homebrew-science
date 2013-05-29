@@ -21,6 +21,7 @@ class Vtk < Formula
   option 'qt-extern', 'Enable Qt4 extension via non-Homebrew external Qt4'
   option 'tcl',       'Enable Tcl wrapping of VTK classes'
   option 'x11',       'Enable X11 extension rather than OSX native Aqua'
+  option 'with-tk',   'Enable Tk extensions and widgets'
 
   def patches
     # Fix bug in Wrapping/Python/setup_install_paths.py: http://vtk.org/Bug/view.php?id=13699
@@ -31,7 +32,6 @@ class Vtk < Formula
     args = std_cmake_args + %W[
       -DVTK_REQUIRED_OBJCXX_FLAGS=''
       -DVTK_USE_CARBON=OFF
-      -DVTK_USE_TK=OFF
       -DBUILD_TESTING=OFF
       -DBUILD_SHARED_LIBS=ON
       -DIOKit:FILEPATH=#{MacOS.sdk_path}/System/Library/Frameworks/IOKit.framework
@@ -85,12 +85,14 @@ class Vtk < Formula
       args << '-DVTK_USE_COCOA=ON'
     end
 
-    unless MacOS::CLT.installed?
-      # We are facing an Xcode-only installation, and we have to keep
-      # vtk from using its internal Tk headers (that differ from OSX's).
-      args << "-DTK_INCLUDE_PATH:PATH=#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Headers"
-      args << "-DTK_INTERNAL_PATH:PATH=#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Headers/tk-private"
+    if build.include? 'with-tk'
+       args << '-DVTK_USE_TK=ON'
+    else
+       args << '-DVTK_USE_TK=OFF'
     end
+
+    args << "-DTK_INCLUDE_PATH:PATH=#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Headers"
+    args << "-DTK_INTERNAL_PATH:PATH=#{MacOS.sdk_path}/System/Library/Frameworks/Tk.framework/Headers/tk-private"
 
     args << ".."
 
